@@ -9,15 +9,17 @@ import java.util.Properties;
 /**
  * @author apple
  */
-public record GeneratorConfig(int questionCount, int minValue, int maxValue, Path outputPath) {
+public record GeneratorConfig(int questionCount, int minValue, int maxValue, Path outputPath, Path answerOutputPath) {
     private static final String DEFAULT_CONFIG_FILE = "application.properties";
     private static final int DEFAULT_QUESTION_COUNT = 100;
     private static final int DEFAULT_MIN_VALUE = 0;
     private static final int DEFAULT_MAX_VALUE = 100;
     private static final Path DEFAULT_OUTPUT_PATH = Path.of("output", "math-problems.txt");
+    private static final Path DEFAULT_ANSWER_OUTPUT_PATH = Path.of("output", "math-answers.txt");
 
     public GeneratorConfig {
         Objects.requireNonNull(outputPath, "outputPath must not be null");
+        Objects.requireNonNull(answerOutputPath, "answerOutputPath must not be null");
 
         if (questionCount <= 0) {
             throw new IllegalArgumentException("questionCount must be greater than 0");
@@ -52,7 +54,8 @@ public record GeneratorConfig(int questionCount, int minValue, int maxValue, Pat
                 readInt(properties, "question.count", DEFAULT_QUESTION_COUNT),
                 readInt(properties, "value.min", DEFAULT_MIN_VALUE),
                 readInt(properties, "value.max", DEFAULT_MAX_VALUE),
-                Path.of(properties.getProperty("output.path", DEFAULT_OUTPUT_PATH.toString()))
+                Path.of(properties.getProperty("output.path", DEFAULT_OUTPUT_PATH.toString())),
+                Path.of(properties.getProperty("answer.output.path", DEFAULT_ANSWER_OUTPUT_PATH.toString()))
         );
     }
 

@@ -17,6 +17,7 @@ class GeneratorConfigTest {
         assertEquals(1, config.minValue());
         assertEquals(10, config.maxValue());
         assertEquals(Path.of("target/test-output/math-problems.txt"), config.outputPath());
+        assertEquals(Path.of("target/test-output/math-answers.txt"), config.answerOutputPath());
     }
 
     @Test
@@ -27,6 +28,7 @@ class GeneratorConfigTest {
         assertEquals(0, config.minValue());
         assertEquals(100, config.maxValue());
         assertEquals(Path.of("output", "math-problems.txt"), config.outputPath());
+        assertEquals(Path.of("output", "math-answers.txt"), config.answerOutputPath());
     }
 
     @Test

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ArithmeticProblemGeneratorTest {
     @Test
     void generatesConfiguredProblemCount() {
-        GeneratorConfig config = new GeneratorConfig(5, 1, 10, Path.of("output.txt"));
+        GeneratorConfig config = new GeneratorConfig(5, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(1));
 
         List<ArithmeticProblem> problems = generator.generate(config);
@@ -24,7 +24,7 @@ class ArithmeticProblemGeneratorTest {
 
     @Test
     void generatesOperandsInsideConfiguredRange() {
-        GeneratorConfig config = new GeneratorConfig(50, 3, 7, Path.of("output.txt"));
+        GeneratorConfig config = new GeneratorConfig(50, 3, 7, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(2));
 
         List<ArithmeticProblem> problems = generator.generate(config);
@@ -35,7 +35,7 @@ class ArithmeticProblemGeneratorTest {
 
     @Test
     void generatesOnlySupportedOperators() {
-        GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"));
+        GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(3));
 
         List<ArithmeticProblem> problems = generator.generate(config);
@@ -45,7 +45,7 @@ class ArithmeticProblemGeneratorTest {
 
     @Test
     void preventsNegativeSubtractionAnswers() {
-        GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"));
+        GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(4));
 
         List<ArithmeticProblem> problems = generator.generate(config);

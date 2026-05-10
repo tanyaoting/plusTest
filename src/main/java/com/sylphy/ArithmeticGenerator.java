@@ -14,7 +14,8 @@ public class ArithmeticGenerator {
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator();
         List<ArithmeticProblem> problems = generator.generate(config);
 
-        new ProblemFileWriter().write(problems, config.outputPath());
+        new ProblemFileWriter().write(problems, config.outputPath(), config.answerOutputPath());
         System.out.println("Generated " + problems.size() + " problems to " + config.outputPath());
+        System.out.println("Generated answers to " + config.answerOutputPath());
     }
 }
