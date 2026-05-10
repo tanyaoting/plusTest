@@ -25,7 +25,7 @@ src/main/java/com/sylphy
 
 src/main/resources/application.properties       # 默认运行配置
 src/test/java/com/sylphy                         # 单元测试
-src/test/resources/test-application.properties   # 测试配置数据
+src/test/resources/generator-config-cases.json      # JSON 测试配置数据
 ```
 
 ## 配置说明
@@ -91,6 +91,7 @@ mvn test
 测试覆盖：
 
 - 配置加载和校验
+- JSON 测试数据读取
 - 题目模型格式化和答案计算
 - 题目生成数量、范围和减法非负
 - 题目文件和答案文件写入

@@ -2,22 +2,32 @@ package com.sylphy.config;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GeneratorConfigTest {
-    @Test
-    void loadsConfigFromClasspath() throws Exception {
-        GeneratorConfig config = GeneratorConfig.loadFromClasspath("test-application.properties");
+    private static final Pattern CONFIG_CASE_PATTERN = Pattern.compile("\\{([^{}]+)}");
 
-        assertEquals(5, config.questionCount());
-        assertEquals(1, config.minValue());
-        assertEquals(10, config.maxValue());
-        assertEquals(Path.of("target/test-output/math-problems.txt"), config.outputPath());
-        assertEquals(Path.of("target/test-output/math-answers.txt"), config.answerOutputPath());
+    @Test
+    void loadsConfigCasesFromJsonTestData() throws Exception {
+        List<ConfigCase> cases = loadConfigCases();
+
+        assertEquals(2, cases.size());
+        assertConfigCase(cases.getFirst(), 5, 1, 10,
+                Path.of("target/test-output/math-problems.txt"),
+                Path.of("target/test-output/math-answers.txt"));
+        assertConfigCase(cases.get(1), 1, 0, 0,
+                Path.of("target/test-output/single-problem.txt"),
+                Path.of("target/test-output/single-answer.txt"));
     }
 
     @Test
@@ -63,5 +73,60 @@ class GeneratorConfigTest {
         properties.setProperty("value.max", String.valueOf(Integer.MAX_VALUE));
 
         assertThrows(IllegalArgumentException.class, () -> GeneratorConfig.fromProperties(properties));
+    }
+
+    private static List<ConfigCase> loadConfigCases() throws IOException {
+        try (InputStream inputStream = GeneratorConfigTest.class.getClassLoader()
+                .getResourceAsStream("generator-config-cases.json")) {
+            String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            return CONFIG_CASE_PATTERN.matcher(json).results()
+                    .map(matchResult -> toConfigCase(matchResult.group(1)))
+                    .toList();
+        }
+    }
+
+    private static ConfigCase toConfigCase(String objectBody) {
+        return new ConfigCase(
+                readString(objectBody, "name"),
+                readInt(objectBody, "questionCount"),
+                readInt(objectBody, "minValue"),
+                readInt(objectBody, "maxValue"),
+                Path.of(readString(objectBody, "outputPath")),
+                Path.of(readString(objectBody, "answerOutputPath"))
+        );
+    }
+
+    private static void assertConfigCase(ConfigCase configCase, int questionCount, int minValue, int maxValue,
+                                         Path outputPath, Path answerOutputPath) {
+        GeneratorConfig config = configCase.toConfig();
+
+        assertEquals(questionCount, config.questionCount());
+        assertEquals(minValue, config.minValue());
+        assertEquals(maxValue, config.maxValue());
+        assertEquals(outputPath, config.outputPath());
+        assertEquals(answerOutputPath, config.answerOutputPath());
+    }
+
+    private static int readInt(String objectBody, String key) {
+        return Integer.parseInt(readValue(objectBody, key));
+    }
+
+    private static String readString(String objectBody, String key) {
+        return readValue(objectBody, key).replaceAll("^\\\"|\\\"$", "");
+    }
+
+    private static String readValue(String objectBody, String key) {
+        Matcher matcher = Pattern.compile("\\\"" + key + "\\\"\\s*:\\s*(\\\"[^\\\"]*\\\"|\\d+)").matcher(objectBody);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Missing JSON key: " + key);
+        }
+        return matcher.group(1);
+    }
+
+    private record ConfigCase(String name, int questionCount, int minValue, int maxValue,
+                              Path outputPath, Path answerOutputPath) {
+        private GeneratorConfig toConfig() {
+            return new GeneratorConfig(questionCount, minValue, maxValue, outputPath, answerOutputPath);
+        }
     }
 }
