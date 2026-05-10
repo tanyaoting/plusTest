@@ -21,13 +21,25 @@ class GeneratorConfigTest {
     void loadsConfigCasesFromJsonTestData() throws Exception {
         List<ConfigCase> cases = loadConfigCases();
 
-        assertEquals(2, cases.size());
+        assertEquals(6, cases.size());
         assertConfigCase(cases.getFirst(), 5, 1, 10,
                 Path.of("target/test-output/math-problems.txt"),
                 Path.of("target/test-output/math-answers.txt"));
         assertConfigCase(cases.get(1), 1, 0, 0,
                 Path.of("target/test-output/single-problem.txt"),
                 Path.of("target/test-output/single-answer.txt"));
+        assertConfigCase(cases.get(2), 100, 0, 100,
+                Path.of("target/test-output/default-problems.txt"),
+                Path.of("target/test-output/default-answers.txt"));
+        assertConfigCase(cases.get(3), 200, 3, 5,
+                Path.of("target/test-output/large-count-problems.txt"),
+                Path.of("target/test-output/large-count-answers.txt"));
+        assertConfigCase(cases.get(4), 20, 90, 100,
+                Path.of("target/test-output/upper-bound-problems.txt"),
+                Path.of("target/test-output/upper-bound-answers.txt"));
+        assertConfigCase(cases.get(5), 12, 2, 30,
+                Path.of("target/test-output/custom/nested/math-problems.txt"),
+                Path.of("target/test-output/custom/nested/math-answers.txt"));
     }
 
     @Test

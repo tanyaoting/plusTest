@@ -14,5 +14,37 @@
     "maxValue": 0,
     "outputPath": "target/test-output/single-problem.txt",
     "answerOutputPath": "target/test-output/single-answer.txt"
+  },
+  {
+    "name": "default-range-count",
+    "questionCount": 100,
+    "minValue": 0,
+    "maxValue": 100,
+    "outputPath": "target/test-output/default-problems.txt",
+    "answerOutputPath": "target/test-output/default-answers.txt"
+  },
+  {
+    "name": "large-count-narrow-range",
+    "questionCount": 200,
+    "minValue": 3,
+    "maxValue": 5,
+    "outputPath": "target/test-output/large-count-problems.txt",
+    "answerOutputPath": "target/test-output/large-count-answers.txt"
+  },
+  {
+    "name": "upper-bound-range",
+    "questionCount": 20,
+    "minValue": 90,
+    "maxValue": 100,
+    "outputPath": "target/test-output/upper-bound-problems.txt",
+    "answerOutputPath": "target/test-output/upper-bound-answers.txt"
+  },
+  {
+    "name": "custom-nested-output",
+    "questionCount": 12,
+    "minValue": 2,
+    "maxValue": 30,
+    "outputPath": "target/test-output/custom/nested/math-problems.txt",
+    "answerOutputPath": "target/test-output/custom/nested/math-answers.txt"
   }
 ]
