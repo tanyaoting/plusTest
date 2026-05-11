@@ -1,6 +1,7 @@
 package com.sylphy.service;
 
 import com.sylphy.config.GeneratorConfig;
+import com.sylphy.factory.ArithmeticProblemGeneratorFactory;
 import com.sylphy.model.ProblemBatch;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ class ArithmeticProblemGeneratorTest {
     @Test
     void generatesConfiguredProblemCount() {
         GeneratorConfig config = new GeneratorConfig(5, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
-        ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(1));
+        ArithmeticProblemGenerator generator = ArithmeticProblemGeneratorFactory.create(new Random(1));
 
         ProblemBatch problems = generator.generate(config);
 
@@ -27,7 +28,7 @@ class ArithmeticProblemGeneratorTest {
     @Test
     void generatesOperandsInsideConfiguredRange() {
         GeneratorConfig config = new GeneratorConfig(50, 3, 7, Path.of("output.txt"), Path.of("answers.txt"));
-        ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(2));
+        ArithmeticProblemGenerator generator = ArithmeticProblemGeneratorFactory.create(new Random(2));
 
         ProblemBatch problems = generator.generate(config);
 
@@ -38,7 +39,7 @@ class ArithmeticProblemGeneratorTest {
     @Test
     void generatesOnlySupportedOperators() {
         GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
-        ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(3));
+        ArithmeticProblemGenerator generator = ArithmeticProblemGeneratorFactory.create(new Random(3));
 
         ProblemBatch problems = generator.generate(config);
 
@@ -48,7 +49,7 @@ class ArithmeticProblemGeneratorTest {
     @Test
     void preventsNegativeSubtractionAnswers() {
         GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
-        ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(4));
+        ArithmeticProblemGenerator generator = ArithmeticProblemGeneratorFactory.create(new Random(4));
 
         ProblemBatch problems = generator.generate(config);
 
