@@ -1,23 +1,25 @@
 package com.sylphy.service;
 
 import com.sylphy.config.GeneratorConfig;
-import com.sylphy.model.ArithmeticProblem;
+import com.sylphy.model.ProblemBatch;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * ArithmeticProblemGenerator 的单元测试，验证生成数量、操作数范围和题目约束。
+ */
 class ArithmeticProblemGeneratorTest {
     @Test
     void generatesConfiguredProblemCount() {
         GeneratorConfig config = new GeneratorConfig(5, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(1));
 
-        List<ArithmeticProblem> problems = generator.generate(config);
+        ProblemBatch problems = generator.generate(config);
 
         assertEquals(5, problems.size());
     }
@@ -27,10 +29,10 @@ class ArithmeticProblemGeneratorTest {
         GeneratorConfig config = new GeneratorConfig(50, 3, 7, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(2));
 
-        List<ArithmeticProblem> problems = generator.generate(config);
+        ProblemBatch problems = generator.generate(config);
 
-        assertTrue(problems.stream().allMatch(problem -> problem.left() >= 3 && problem.left() <= 7));
-        assertTrue(problems.stream().allMatch(problem -> problem.right() >= 3 && problem.right() <= 7));
+        assertTrue(problems.asList().stream().allMatch(problem -> problem.left() >= 3 && problem.left() <= 7));
+        assertTrue(problems.asList().stream().allMatch(problem -> problem.right() >= 3 && problem.right() <= 7));
     }
 
     @Test
@@ -38,9 +40,9 @@ class ArithmeticProblemGeneratorTest {
         GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(3));
 
-        List<ArithmeticProblem> problems = generator.generate(config);
+        ProblemBatch problems = generator.generate(config);
 
-        assertTrue(problems.stream().allMatch(problem -> problem.operator() == '+' || problem.operator() == '-'));
+        assertTrue(problems.asList().stream().allMatch(problem -> problem.operator() == '+' || problem.operator() == '-'));
     }
 
     @Test
@@ -48,9 +50,9 @@ class ArithmeticProblemGeneratorTest {
         GeneratorConfig config = new GeneratorConfig(50, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
         ArithmeticProblemGenerator generator = new ArithmeticProblemGenerator(new Random(4));
 
-        List<ArithmeticProblem> problems = generator.generate(config);
+        ProblemBatch problems = generator.generate(config);
 
-        assertTrue(problems.stream()
+        assertTrue(problems.asList().stream()
                 .filter(problem -> problem.operator() == '-')
                 .allMatch(problem -> problem.answer() >= 0));
     }

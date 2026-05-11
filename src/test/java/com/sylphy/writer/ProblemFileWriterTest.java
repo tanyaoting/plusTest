@@ -1,6 +1,8 @@
 package com.sylphy.writer;
 
-import com.sylphy.model.ArithmeticProblem;
+import com.sylphy.model.AdditionProblem;
+import com.sylphy.model.ProblemBatch;
+import com.sylphy.model.SubtractionProblem;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -11,6 +13,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * ProblemFileWriter 的单元测试，验证目录创建、题目输出和答案输出内容。
+ */
 class ProblemFileWriterTest {
     @TempDir
     Path tempDir;
@@ -20,10 +25,10 @@ class ProblemFileWriterTest {
         ProblemFileWriter writer = new ProblemFileWriter();
         Path outputPath = tempDir.resolve("nested/math-problems.txt");
         Path answerOutputPath = tempDir.resolve("nested/math-answers.txt");
-        List<ArithmeticProblem> problems = List.of(
-                new ArithmeticProblem(3, '+', 5),
-                new ArithmeticProblem(8, '-', 2)
-        );
+        ProblemBatch problems = new ProblemBatch(List.of(
+                new AdditionProblem(3, 5),
+                new SubtractionProblem(8, 2)
+        ));
 
         writer.write(problems, outputPath, answerOutputPath);
 

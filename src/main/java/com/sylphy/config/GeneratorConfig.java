@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * @author apple
+ * 题目生成配置的抽象数据类型，集中保存题目数量、取值范围和输出路径，并负责配置校验。
  */
 public record GeneratorConfig(int questionCount, int minValue, int maxValue, Path outputPath, Path answerOutputPath) {
     private static final String DEFAULT_CONFIG_FILE = "application.properties";

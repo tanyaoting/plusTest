@@ -1,24 +1,17 @@
 package com.sylphy.model;
 
 /**
+ * 算术题目的公共接口，定义题目展示、答案计算和操作数访问能力。
  * @author apple
  */
-public record ArithmeticProblem(int left, char operator, int right) {
-    public ArithmeticProblem {
-        if (operator != '+' && operator != '-') {
-            throw new IllegalArgumentException("operator must be + or -");
-        }
-    }
+public interface ArithmeticProblem {
+    int left();
 
-    public String format() {
-        return left + " " + operator + " " + right + " = ";
-    }
+    int right();
 
-    public int answer() {
-        return switch (operator) {
-            case '+' -> left + right;
-            case '-' -> left - right;
-            default -> throw new IllegalStateException("Unsupported operator: " + operator);
-        };
-    }
+    char operator();
+
+    String format();
+
+    int answer();
 }

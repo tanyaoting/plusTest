@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * GeneratorConfig 的单元测试，验证配置加载、默认值和非法配置校验。
+ */
 class GeneratorConfigTest {
     private static final Pattern CONFIG_CASE_PATTERN = Pattern.compile("\\{([^{}]+)}");
 
@@ -135,6 +138,9 @@ class GeneratorConfigTest {
         return matcher.group(1);
     }
 
+    /**
+     * JSON 测试数据中的单个配置用例，用于转换为 GeneratorConfig 进行断言。
+     */
     private record ConfigCase(String name, int questionCount, int minValue, int maxValue,
                               Path outputPath, Path answerOutputPath) {
         private GeneratorConfig toConfig() {
