@@ -1,7 +1,6 @@
 package com.sylphy;
 
 import com.sylphy.config.GeneratorConfig;
-import com.sylphy.factory.ArithmeticProblemGeneratorFactory;
 import com.sylphy.model.ProblemBatch;
 import com.sylphy.service.ArithmeticProblemGenerator;
 import com.sylphy.writer.ProblemFileWriter;
@@ -15,7 +14,7 @@ import java.io.IOException;
 public class ArithmeticGenerator {
     public static void main(String[] args) throws IOException {
         GeneratorConfig config = GeneratorConfig.loadDefault();
-        ArithmeticProblemGenerator generator = ArithmeticProblemGeneratorFactory.createDefault();
+        ArithmeticProblemGenerator generator = ArithmeticProblemGenerator.Factory.createDefault();
         ProblemBatch problems = generator.generate(config);
 
         new ProblemFileWriter().write(problems, config.outputPath(), config.answerOutputPath());
