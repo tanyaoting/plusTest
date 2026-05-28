@@ -2,11 +2,8 @@ package com.sylphy.service;
 
 import com.sylphy.config.GeneratorConfig;
 import com.sylphy.iterator.ArithmeticProblemIterator;
-import com.sylphy.model.ArithmeticProblem;
+import com.sylphy.model.arithmericproblem.ArithmeticProblem;
 import com.sylphy.model.ProblemBatch;
-import com.sylphy.strategy.AdditionProblemStrategy;
-import com.sylphy.strategy.ArithmeticProblemStrategy;
-import com.sylphy.strategy.SubtractionProblemStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,18 +17,13 @@ import java.util.Random;
  */
 public class ArithmeticProblemGenerator {
     private final Random random;
-    private final List<ArithmeticProblemStrategy> strategies;
 
-    private ArithmeticProblemGenerator(Random random, List<ArithmeticProblemStrategy> strategies) {
+    private ArithmeticProblemGenerator(Random random) {
         this.random = Objects.requireNonNull(random, "random must not be null");
-        this.strategies = List.copyOf(Objects.requireNonNull(strategies, "strategies must not be null"));
-        if (this.strategies.isEmpty()) {
-            throw new IllegalArgumentException("strategies must not be empty");
-        }
     }
 
     public ProblemBatch generate(GeneratorConfig config) {
-        ArithmeticProblemIterator iterator = new ArithmeticProblemIterator(config, random, strategies);
+        ArithmeticProblemIterator iterator = new ArithmeticProblemIterator(config, random, config.strategies());
         List<ArithmeticProblem> problems = new ArrayList<>(config.questionCount());
         while (iterator.hasNext()) {
             problems.add(iterator.next());
@@ -53,17 +45,9 @@ public class ArithmeticProblemGenerator {
         }
 
         public static ArithmeticProblemGenerator create(Random random) {
-            return create(random, defaultStrategies());
-        }
-
-        public static ArithmeticProblemGenerator create(Random random, List<ArithmeticProblemStrategy> strategies) {
             Objects.requireNonNull(random, "random must not be null");
-            Objects.requireNonNull(strategies, "strategies must not be null");
-            return new ArithmeticProblemGenerator(random, strategies);
+            return new ArithmeticProblemGenerator(random);
         }
 
-        private static List<ArithmeticProblemStrategy> defaultStrategies() {
-            return List.of(new AdditionProblemStrategy(), new SubtractionProblemStrategy());
-        }
     }
 }

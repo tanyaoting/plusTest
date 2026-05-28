@@ -1,7 +1,7 @@
 package com.sylphy.strategy;
 
-import com.sylphy.model.AdditionProblem;
-import com.sylphy.model.ArithmeticProblem;
+import com.sylphy.model.arithmericproblem.AdditionProblem;
+import com.sylphy.model.arithmericproblem.ArithmeticProblem;
 
 /**
  * 加法题生成策略，负责根据左右操作数创建加法题。

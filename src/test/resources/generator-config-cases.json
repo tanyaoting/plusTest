@@ -4,47 +4,47 @@
     "questionCount": 5,
     "minValue": 1,
     "maxValue": 10,
-    "outputPath": "target/test-output/math-problems.txt",
-    "answerOutputPath": "target/test-output/math-answers.txt"
+    "outputPath": "target/test-output/math-problems.csv",
+    "answerOutputPath": "target/test-output/math-answers.csv"
   },
   {
     "name": "single-value",
     "questionCount": 1,
     "minValue": 0,
     "maxValue": 0,
-    "outputPath": "target/test-output/single-problem.txt",
-    "answerOutputPath": "target/test-output/single-answer.txt"
+    "outputPath": "target/test-output/single-problem.csv",
+    "answerOutputPath": "target/test-output/single-answer.csv"
   },
   {
     "name": "default-range-count",
     "questionCount": 100,
     "minValue": 0,
     "maxValue": 100,
-    "outputPath": "target/test-output/default-problems.txt",
-    "answerOutputPath": "target/test-output/default-answers.txt"
+    "outputPath": "target/test-output/default-problems.csv",
+    "answerOutputPath": "target/test-output/default-answers.csv"
   },
   {
     "name": "large-count-narrow-range",
     "questionCount": 200,
     "minValue": 3,
     "maxValue": 5,
-    "outputPath": "target/test-output/large-count-problems.txt",
-    "answerOutputPath": "target/test-output/large-count-answers.txt"
+    "outputPath": "target/test-output/large-count-problems.csv",
+    "answerOutputPath": "target/test-output/large-count-answers.csv"
   },
   {
     "name": "upper-bound-range",
     "questionCount": 20,
     "minValue": 90,
     "maxValue": 100,
-    "outputPath": "target/test-output/upper-bound-problems.txt",
-    "answerOutputPath": "target/test-output/upper-bound-answers.txt"
+    "outputPath": "target/test-output/upper-bound-problems.csv",
+    "answerOutputPath": "target/test-output/upper-bound-answers.csv"
   },
   {
     "name": "custom-nested-output",
     "questionCount": 12,
     "minValue": 2,
     "maxValue": 30,
-    "outputPath": "target/test-output/custom/nested/math-problems.txt",
-    "answerOutputPath": "target/test-output/custom/nested/math-answers.txt"
+    "outputPath": "target/test-output/custom/nested/math-problems.csv",
+    "answerOutputPath": "target/test-output/custom/nested/math-answers.csv"
   }
 ]

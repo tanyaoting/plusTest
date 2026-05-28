@@ -1,6 +1,6 @@
 package com.sylphy.strategy;
 
-import com.sylphy.model.ArithmeticProblem;
+import com.sylphy.model.arithmericproblem.ArithmeticProblem;
 
 /**
  * 算术题生成策略接口，用于解耦题目生成流程和具体题型创建逻辑。

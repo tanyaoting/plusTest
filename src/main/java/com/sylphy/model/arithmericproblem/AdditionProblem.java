@@ -1,4 +1,4 @@
-package com.sylphy.model;
+package com.sylphy.model.arithmericproblem;
 
 /**
  * 加法题目实体，负责表达加法题并计算加法答案。

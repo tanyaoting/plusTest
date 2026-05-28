@@ -1,8 +1,8 @@
 package com.sylphy.strategy;
 
-import com.sylphy.model.AdditionProblem;
-import com.sylphy.model.ArithmeticProblem;
-import com.sylphy.model.SubtractionProblem;
+import com.sylphy.model.arithmericproblem.AdditionProblem;
+import com.sylphy.model.arithmericproblem.ArithmeticProblem;
+import com.sylphy.model.arithmericproblem.SubtractionProblem;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

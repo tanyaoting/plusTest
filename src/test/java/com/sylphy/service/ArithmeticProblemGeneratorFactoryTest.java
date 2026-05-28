@@ -28,12 +28,16 @@ class ArithmeticProblemGeneratorFactoryTest {
     }
 
     @Test
-    void createsGeneratorWithCustomStrategies() {
-        GeneratorConfig config = new GeneratorConfig(10, 1, 10, Path.of("output.txt"), Path.of("answers.txt"));
-        ArithmeticProblemGenerator generator = ArithmeticProblemGenerator.Factory.create(
-                new Random(5),
+    void generatesWithStrategiesFromConfig() {
+        GeneratorConfig config = new GeneratorConfig(
+                10,
+                1,
+                10,
+                Path.of("output.txt"),
+                Path.of("answers.txt"),
                 List.of(new AdditionProblemStrategy())
         );
+        ArithmeticProblemGenerator generator = ArithmeticProblemGenerator.Factory.create(new Random(5));
 
         ProblemBatch problems = generator.generate(config);
 
@@ -42,6 +46,13 @@ class ArithmeticProblemGeneratorFactoryTest {
 
     @Test
     void rejectsEmptyStrategies() {
-        assertThrows(IllegalArgumentException.class, () -> ArithmeticProblemGenerator.Factory.create(new Random(1), List.of()));
+        assertThrows(IllegalArgumentException.class, () -> new GeneratorConfig(
+                10,
+                1,
+                10,
+                Path.of("output.txt"),
+                Path.of("answers.txt"),
+                List.of()
+        ));
     }
 }

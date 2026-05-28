@@ -26,23 +26,23 @@ class GeneratorConfigTest {
 
         assertEquals(6, cases.size());
         assertConfigCase(cases.getFirst(), 5, 1, 10,
-                Path.of("target/test-output/math-problems.txt"),
-                Path.of("target/test-output/math-answers.txt"));
+                Path.of("target/test-output/math-problems.csv"),
+                Path.of("target/test-output/math-answers.csv"));
         assertConfigCase(cases.get(1), 1, 0, 0,
-                Path.of("target/test-output/single-problem.txt"),
-                Path.of("target/test-output/single-answer.txt"));
+                Path.of("target/test-output/single-problem.csv"),
+                Path.of("target/test-output/single-answer.csv"));
         assertConfigCase(cases.get(2), 100, 0, 100,
-                Path.of("target/test-output/default-problems.txt"),
-                Path.of("target/test-output/default-answers.txt"));
+                Path.of("target/test-output/default-problems.csv"),
+                Path.of("target/test-output/default-answers.csv"));
         assertConfigCase(cases.get(3), 200, 3, 5,
-                Path.of("target/test-output/large-count-problems.txt"),
-                Path.of("target/test-output/large-count-answers.txt"));
+                Path.of("target/test-output/large-count-problems.csv"),
+                Path.of("target/test-output/large-count-answers.csv"));
         assertConfigCase(cases.get(4), 20, 90, 100,
-                Path.of("target/test-output/upper-bound-problems.txt"),
-                Path.of("target/test-output/upper-bound-answers.txt"));
+                Path.of("target/test-output/upper-bound-problems.csv"),
+                Path.of("target/test-output/upper-bound-answers.csv"));
         assertConfigCase(cases.get(5), 12, 2, 30,
-                Path.of("target/test-output/custom/nested/math-problems.txt"),
-                Path.of("target/test-output/custom/nested/math-answers.txt"));
+                Path.of("target/test-output/custom/nested/math-problems.csv"),
+                Path.of("target/test-output/custom/nested/math-answers.csv"));
     }
 
     @Test
@@ -52,8 +52,8 @@ class GeneratorConfigTest {
         assertEquals(100, config.questionCount());
         assertEquals(0, config.minValue());
         assertEquals(100, config.maxValue());
-        assertEquals(Path.of("output", "math-problems.txt"), config.outputPath());
-        assertEquals(Path.of("output", "math-answers.txt"), config.answerOutputPath());
+        assertEquals(Path.of("output", "math-problems.csv"), config.outputPath());
+        assertEquals(Path.of("output", "math-answers.csv"), config.answerOutputPath());
     }
 
     @Test

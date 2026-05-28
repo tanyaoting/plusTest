@@ -1,7 +1,7 @@
 package com.sylphy.iterator;
 
 import com.sylphy.config.GeneratorConfig;
-import com.sylphy.model.ArithmeticProblem;
+import com.sylphy.model.arithmericproblem.ArithmeticProblem;
 import com.sylphy.strategy.SubtractionProblemStrategy;
 import org.junit.jupiter.api.Test;
 

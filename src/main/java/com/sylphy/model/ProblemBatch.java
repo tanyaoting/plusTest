@@ -1,5 +1,7 @@
 package com.sylphy.model;
 
+import com.sylphy.model.arithmericproblem.ArithmeticProblem;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;

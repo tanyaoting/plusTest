@@ -1,4 +1,4 @@
-package com.sylphy.model;
+package com.sylphy.model.arithmericproblem;
 
 import java.util.Objects;
 
