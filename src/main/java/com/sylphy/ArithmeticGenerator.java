@@ -56,8 +56,8 @@ public class ArithmeticGenerator {
         ProblemBatch problems = generator.generate(config);
 
         new ProblemFileWriter().write(problems, config.outputPath(), config.answerOutputPath());
-        System.out.println("Generated " + problems.size() + " problems to " + config.outputPath());
-        System.out.println("Generated answers to " + config.answerOutputPath());
+        System.out.println("已生成 " + problems.size() + " 道题，题目文件：" + config.outputPath());
+        System.out.println("已生成标准答案文件：" + config.answerOutputPath());
     }
 
     private static void grade(Path problemPath, Path studentAnswerPath, Path resultPath) throws IOException {
@@ -67,32 +67,32 @@ public class ArithmeticGenerator {
         GradingReport report = new GradingService().grade(problems, answers);
 
         new GradingReportWriter().write(report, resultPath);
-        System.out.println("Graded " + report.totalCount() + " problems.");
-        System.out.println("Correct: " + report.correctCount() + "/" + report.totalCount());
-        System.out.println("Score: " + report.score());
-        System.out.println("Saved results to " + resultPath);
+        System.out.println("已批改 " + report.totalCount() + " 道题。");
+        System.out.println("正确数量：" + report.correctCount() + "/" + report.totalCount());
+        System.out.println("得分：" + report.score());
+        System.out.println("批改结果已保存到：" + resultPath);
     }
 
     private static Integer parseQuestionCount(String value) {
         try {
             int questionCount = Integer.parseInt(value);
             if (questionCount <= 0) {
-                System.out.println("Question count must be greater than 0.");
+                System.out.println("题目数量必须大于 0。");
                 printUsage();
                 return null;
             }
             return questionCount;
         } catch (NumberFormatException exception) {
-            System.out.println("Question count must be an integer: " + value);
+            System.out.println("题目数量必须是整数：" + value);
             printUsage();
             return null;
         }
     }
 
     private static void printUsage() {
-        System.out.println("Usage:");
+        System.out.println("用法：");
         System.out.println("  java com.sylphy.ArithmeticGenerator");
-        System.out.println("  java com.sylphy.ArithmeticGenerator <question-count>");
-        System.out.println("  java com.sylphy.ArithmeticGenerator grade <problems.csv> <student-answers.csv> <results.csv>");
+        System.out.println("  java com.sylphy.ArithmeticGenerator <题目数量>");
+        System.out.println("  java com.sylphy.ArithmeticGenerator grade <题目文件.csv> <学生答案.csv> <批改结果.csv>");
     }
 }
