@@ -1,14 +1,10 @@
 package com.sylphy;
 
 import com.sylphy.config.GeneratorConfig;
-import com.sylphy.csv.CsvFile;
-import com.sylphy.model.GradingReport;
-import com.sylphy.model.ProblemBatch;
-import com.sylphy.model.ProblemRecord;
-import com.sylphy.model.StudentAnswerRecord;
-import com.sylphy.model.arithmericproblem.ArithmeticProblem;
-import com.sylphy.reader.ProblemCsvReader;
-import com.sylphy.reader.StudentAnswerCsvReader;
+import com.sylphy.console.ConfigLoader;
+import com.sylphy.console.ConsoleIo;
+import com.sylphy.console.PracticeFileLocator;
+import com.sylphy.console.PracticeWorkflow;
 import com.sylphy.service.ArithmeticProblemGenerator;
 import com.sylphy.service.GradingService;
 import com.sylphy.writer.GradingReportWriter;
@@ -17,34 +13,20 @@ import com.sylphy.writer.ProblemFileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
-import java.util.stream.Stream;
 
 /**
  * 控制台菜单应用，整合练习生成、录入、批改和机器练习功能。
  * @author apple
  */
 public final class ConsoleApplication {
-    private static final int DEFAULT_INTERACTIVE_COUNT = 10;
-
-    private final Scanner input;
-    private final PrintStream output;
-    private final ArithmeticProblemGenerator generator;
-    private final ProblemFileWriter problemWriter;
-    private final GradingReportWriter reportWriter;
-    private final GradingService gradingService;
-    private final ConfigLoader configLoader;
+    private final ConsoleIo io;
+    private final PracticeWorkflow workflow;
 
     public ConsoleApplication(InputStream inputStream, PrintStream output) {
         this(
-                new Scanner(Objects.requireNonNull(inputStream, "inputStream must not be null")),
-                output,
+                new ConsoleIo(inputStream, output),
                 ArithmeticProblemGenerator.Factory.createDefault(),
                 new ProblemFileWriter(),
                 new GradingReportWriter(),
@@ -62,334 +44,74 @@ public final class ConsoleApplication {
             GradingService gradingService,
             ConfigLoader configLoader
     ) {
-        this.input = Objects.requireNonNull(input, "input must not be null");
-        this.output = Objects.requireNonNull(output, "output must not be null");
-        this.generator = Objects.requireNonNull(generator, "generator must not be null");
-        this.problemWriter = Objects.requireNonNull(problemWriter, "problemWriter must not be null");
-        this.reportWriter = Objects.requireNonNull(reportWriter, "reportWriter must not be null");
-        this.gradingService = Objects.requireNonNull(gradingService, "gradingService must not be null");
-        this.configLoader = Objects.requireNonNull(configLoader, "configLoader must not be null");
+        this(
+                new ConsoleIo(input, output),
+                generator,
+                problemWriter,
+                reportWriter,
+                gradingService,
+                configLoader
+        );
+    }
+
+    private ConsoleApplication(
+            ConsoleIo io,
+            ArithmeticProblemGenerator generator,
+            ProblemFileWriter problemWriter,
+            GradingReportWriter reportWriter,
+            GradingService gradingService,
+            ConfigLoader configLoader
+    ) {
+        this.io = Objects.requireNonNull(io, "io must not be null");
+        this.workflow = new PracticeWorkflow(
+                io,
+                generator,
+                problemWriter,
+                reportWriter,
+                gradingService,
+                configLoader,
+                new PracticeFileLocator()
+        );
     }
 
     public void run() {
         boolean running = true;
         while (running) {
             printMenu();
-            String choice = readLine("请选择......");
+            String choice = io.readLine("请选择......");
             try {
                 switch (choice) {
-                    case "1" -> generateBatchProblems();
-                    case "2" -> selectAndPrintProblems();
-                    case "3" -> editStudentAnswers();
-                    case "4" -> gradeSelectedPractice();
-                    case "5" -> gradeBatchPractice();
-                    case "6" -> completePracticeOnComputer();
+                    case "1" -> workflow.generateBatchProblems();
+                    case "2" -> workflow.selectAndPrintProblems();
+                    case "3" -> workflow.editStudentAnswers();
+                    case "4" -> workflow.gradeSelectedPractice();
+                    case "5" -> workflow.gradeBatchPractice();
+                    case "6" -> workflow.completePracticeOnComputer();
                     case "0" -> {
-                        output.println("已退出。");
+                        io.println("已退出。");
                         running = false;
                     }
-                    default -> output.println("无效选择，请输入菜单前面的数字。");
+                    default -> io.println("无效选择，请输入菜单前面的数字。");
                 }
             } catch (IOException | RuntimeException exception) {
-                output.println("执行失败：" + exception.getMessage());
+                io.println("执行失败：" + exception.getMessage());
             }
-            output.println();
+            io.println();
         }
     }
 
     private void printMenu() {
-        output.println("100以内的口算练习程序");
-        output.println("============================================================");
-        output.println("功能列表（请输入功能前面对应的数字，按回车键执行）：");
-        output.println("------------------------------------------------------------");
-        output.println("1. 批量生成练习套卷");
-        output.println("2. 选择题目并生成打印版");
-        output.println("3. 录入纸面练习答案");
-        output.println("4. 批改单套练习");
-        output.println("5. 批量批改多套练习");
-        output.println("6. 小明电脑练习并批改");
-        output.println("0. 退出");
-        output.println("============================================================");
-    }
-
-    private void generateBatchProblems() throws IOException {
-        GeneratorConfig config = configLoader.load();
-        int practiceCount = readOptionalPositiveInt("请输入练习套数（直接回车默认 3）：", 3);
-        int questionCount = readOptionalPositiveInt("请输入题目数量（直接回车使用配置值 "
-                + config.questionCount() + "）：", config.questionCount());
-        Path outputDirectory = readPath("请输入批量练习保存目录", defaultBatchDirectory(config));
-        GeneratorConfig actualConfig = withQuestionCount(config, questionCount);
-        for (int practiceNumber = 1; practiceNumber <= practiceCount; practiceNumber++) {
-            ProblemBatch problems = generator.generate(actualConfig);
-            Path problemPath = batchProblemPath(outputDirectory, practiceNumber);
-            Path answerPath = batchAnswerPath(outputDirectory, practiceNumber);
-            problemWriter.write(problems, problemPath, answerPath);
-            output.println("已生成第 " + practiceNumber + " 套练习：" + problemPath);
-            output.println("标准答案文件：" + answerPath);
-        }
-        output.println("共生成 " + practiceCount + " 套练习，每套 " + questionCount + " 道题。");
-    }
-
-    private void selectAndPrintProblems() throws IOException {
-        GeneratorConfig config = configLoader.load();
-        Path sourcePath = readPath("请输入题目文件路径", firstBatchProblemPath(config));
-        List<ProblemRecord> records = readProblems(sourcePath, config);
-        int startIndex = readOptionalPositiveInt("请输入起始题号（直接回车默认 1）：", 1);
-        int count = readOptionalPositiveInt("请输入选择题目数量（直接回车默认 "
-                + records.size() + "）：", records.size());
-        List<ProblemRecord> selectedRecords = selectRecords(records, startIndex, count);
-        ProblemBatch selectedProblems = toProblemBatch(selectedRecords);
-
-        Path problemPath = readPath("请输入保存选择题目的路径", defaultSelectedProblemPath(config));
-        Path answerPath = readPath("请输入保存选择题目答案的路径", defaultSelectedAnswerPath(config));
-        problemWriter.write(selectedProblems, problemPath, answerPath);
-
-        output.println("已选择并保存 " + selectedProblems.size() + " 道题。");
-        output.println("可打印题目文件：" + problemPath);
-        for (ProblemRecord record : selectedRecords) {
-            output.println(record.index() + ". " + record.expression());
-        }
-    }
-
-    private void editStudentAnswers() throws IOException {
-        GeneratorConfig config = configLoader.load();
-        Path problemPath = readPath("请输入题目文件路径", defaultSelectedProblemPath(config));
-        List<ProblemRecord> problems = readProblems(problemPath, config);
-        List<List<String>> rows = new ArrayList<>(problems.size() + 1);
-        rows.add(List.of("index", "studentAnswer"));
-        for (ProblemRecord problem : problems) {
-            int answer = readInteger(problem.index() + ". " + problem.expression());
-            rows.add(List.of(String.valueOf(problem.index()), String.valueOf(answer)));
-        }
-
-        Path answerPath = readPath("请输入保存答题结果的路径", defaultStudentAnswerPath(config));
-        CsvFile.writeRows(answerPath, rows);
-        output.println("答题结果已保存到：" + answerPath);
-    }
-
-    private void gradeSelectedPractice() throws IOException {
-        GeneratorConfig config = configLoader.load();
-        Path problemPath = readPath("请输入要批改的练习题文件路径", defaultSelectedProblemPath(config));
-        Path answerPath = readPath("请输入学生答案文件路径", defaultStudentAnswerPath(config));
-        Path resultPath = readPath("请输入批改结果保存路径", defaultResultPath(config));
-        grade(problemPath, answerPath, resultPath, config);
-    }
-
-    private void gradeBatchPractice() throws IOException {
-        GeneratorConfig config = configLoader.load();
-        Path batchDirectory = readPath("请输入批量练习目录", defaultBatchDirectory(config));
-        List<Path> problemPaths = listBatchProblemPaths(batchDirectory);
-        int gradedCount = 0;
-        for (Path problemPath : problemPaths) {
-            Path answerPath = batchStudentAnswerPath(problemPath);
-            if (!Files.exists(answerPath)) {
-                output.println("跳过 " + problemPath + "，未找到学生答案文件：" + answerPath);
-                continue;
-            }
-            Path resultPath = batchResultPath(problemPath);
-            grade(problemPath, answerPath, resultPath, config);
-            gradedCount++;
-        }
-        output.println("批量批改完成，共批改 " + gradedCount + " 套练习。");
-    }
-
-    private void completePracticeOnComputer() throws IOException {
-        GeneratorConfig config = configLoader.load();
-        Path problemPath = readPath("请输入机器练习题目文件路径", defaultSelectedProblemPath(config));
-        List<ProblemRecord> problems = readProblems(problemPath, config);
-        int count = readOptionalPositiveInt("请输入机器练习题目数量（直接回车默认 "
-                + Math.min(DEFAULT_INTERACTIVE_COUNT, problems.size()) + "）：",
-                Math.min(DEFAULT_INTERACTIVE_COUNT, problems.size()));
-        List<ProblemRecord> selectedProblems = problems.stream().limit(count).toList();
-        List<StudentAnswerRecord> answers = new ArrayList<>(selectedProblems.size());
-
-        output.println("开始练习。");
-        for (ProblemRecord problem : selectedProblems) {
-            int answer = readInteger(problem.index() + ". " + problem.expression());
-            answers.add(new StudentAnswerRecord(problem.index(), answer));
-        }
-
-        GradingReport report = gradingService.grade(selectedProblems, answers);
-        Path resultPath = readPath("请输入机器练习结果保存路径", defaultResultPath(config));
-        reportWriter.write(report, resultPath);
-        printReport(report, resultPath);
-    }
-
-    private void grade(Path problemPath, Path answerPath, Path resultPath, GeneratorConfig config) throws IOException {
-        List<ProblemRecord> problems = readProblems(problemPath, config);
-        List<StudentAnswerRecord> answers = new StudentAnswerCsvReader().read(answerPath);
-        GradingReport report = gradingService.grade(problems, answers);
-        reportWriter.write(report, resultPath);
-        printReport(report, resultPath);
-    }
-
-    private void printReport(GradingReport report, Path resultPath) {
-        output.println("已批改 " + report.totalCount() + " 道题。");
-        output.println("正确数量：" + report.correctCount() + "/" + report.totalCount());
-        output.println("得分：" + report.score());
-        output.println("错题数量：" + report.wrongResults().size());
-        output.println("批改结果已保存到：" + resultPath);
-    }
-
-    private List<ProblemRecord> readProblems(Path path, GeneratorConfig config) throws IOException {
-        return new ProblemCsvReader(config.strategies()).read(path);
-    }
-
-    private List<Path> listBatchProblemPaths(Path batchDirectory) throws IOException {
-        if (!Files.isDirectory(batchDirectory)) {
-            throw new IllegalArgumentException("批量练习目录不存在：" + batchDirectory);
-        }
-        try (Stream<Path> paths = Files.list(batchDirectory)) {
-            List<Path> problemPaths = paths
-                    .filter(path -> path.getFileName().toString().endsWith("-problems.csv"))
-                    .sorted(Comparator.comparing(Path::toString))
-                    .toList();
-            if (problemPaths.isEmpty()) {
-                throw new IllegalArgumentException("批量练习目录中没有找到题目文件。");
-            }
-            return problemPaths;
-        }
-    }
-
-    private ProblemBatch toProblemBatch(List<ProblemRecord> records) {
-        List<ArithmeticProblem> problems = new ArrayList<>(records.size());
-        for (ProblemRecord record : records) {
-            problems.add(record.strategy().create(record.left(), record.right()));
-        }
-        return new ProblemBatch(problems);
-    }
-
-    private List<ProblemRecord> selectRecords(List<ProblemRecord> records, int startIndex, int count) {
-        List<ProblemRecord> selectedRecords = records.stream()
-                .filter(record -> record.index() >= startIndex)
-                .limit(count)
-                .toList();
-        if (selectedRecords.isEmpty()) {
-            throw new IllegalArgumentException("没有找到可选择的题目。");
-        }
-        return selectedRecords;
-    }
-
-    private GeneratorConfig withQuestionCount(GeneratorConfig config, int questionCount) {
-        return new GeneratorConfig(
-                questionCount,
-                config.minValue(),
-                config.maxValue(),
-                config.outputPath(),
-                config.answerOutputPath(),
-                config.strategies()
-        );
-    }
-
-    private Path defaultOutputDirectory(GeneratorConfig config) {
-        Path parent = config.outputPath().getParent();
-        if (parent == null) {
-            return Path.of(".");
-        }
-        return parent;
-    }
-
-    private Path defaultBatchDirectory(GeneratorConfig config) {
-        return defaultOutputDirectory(config).resolve("practices");
-    }
-
-    private Path firstBatchProblemPath(GeneratorConfig config) {
-        return batchProblemPath(defaultBatchDirectory(config), 1);
-    }
-
-    private Path defaultSelectedProblemPath(GeneratorConfig config) {
-        return defaultOutputDirectory(config).resolve("selected-problems.csv");
-    }
-
-    private Path defaultSelectedAnswerPath(GeneratorConfig config) {
-        return defaultOutputDirectory(config).resolve("selected-answers.csv");
-    }
-
-    private Path defaultStudentAnswerPath(GeneratorConfig config) {
-        return defaultOutputDirectory(config).resolve("student-answers.csv");
-    }
-
-    private Path defaultResultPath(GeneratorConfig config) {
-        return defaultOutputDirectory(config).resolve("results.csv");
-    }
-
-    private Path batchProblemPath(Path outputDirectory, int practiceNumber) {
-        return outputDirectory.resolve("practice-" + formatPracticeNumber(practiceNumber) + "-problems.csv");
-    }
-
-    private Path batchAnswerPath(Path outputDirectory, int practiceNumber) {
-        return outputDirectory.resolve("practice-" + formatPracticeNumber(practiceNumber) + "-answers.csv");
-    }
-
-    private Path batchStudentAnswerPath(Path problemPath) {
-        String fileName = problemPath.getFileName().toString();
-        return problemPath.resolveSibling(fileName.replace("-problems.csv", "-student-answers.csv"));
-    }
-
-    private Path batchResultPath(Path problemPath) {
-        String fileName = problemPath.getFileName().toString();
-        return problemPath.resolveSibling(fileName.replace("-problems.csv", "-results.csv"));
-    }
-
-    private String formatPracticeNumber(int practiceNumber) {
-        return String.format("%03d", practiceNumber);
-    }
-
-    private Path readPath(String prompt, Path defaultPath) {
-        String line = readLine(prompt + "（直接回车默认 " + defaultPath + "）：");
-        if (line.isBlank()) {
-            return defaultPath;
-        }
-        return Path.of(line);
-    }
-
-    private int readOptionalPositiveInt(String prompt, int defaultValue) {
-        String line = readLine(prompt);
-        if (line.isBlank()) {
-            return defaultValue;
-        }
-        Integer value = parseInteger(line);
-        if (value == null || value <= 0) {
-            throw new IllegalArgumentException("请输入大于 0 的整数。");
-        }
-        return value;
-    }
-
-    private int readPositiveInt(String prompt) {
-        int value = readInteger(prompt);
-        if (value <= 0) {
-            throw new IllegalArgumentException("请输入大于 0 的整数。");
-        }
-        return value;
-    }
-
-    private int readInteger(String prompt) {
-        String line = readLine(prompt);
-        Integer value = parseInteger(line);
-        if (value == null) {
-            throw new IllegalArgumentException("请输入整数。");
-        }
-        return value;
-    }
-
-    private String readLine(String prompt) {
-        output.print(prompt);
-        if (!input.hasNextLine()) {
-            return "";
-        }
-        return input.nextLine().trim();
-    }
-
-    private Integer parseInteger(String value) {
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
-
-    @FunctionalInterface
-    interface ConfigLoader {
-        GeneratorConfig load() throws IOException;
+        io.println("100以内的口算练习程序");
+        io.println("============================================================");
+        io.println("功能列表（请输入功能前面对应的数字，按回车键执行）：");
+        io.println("------------------------------------------------------------");
+        io.println("1. 批量生成练习套卷");
+        io.println("2. 选择题目并生成打印版");
+        io.println("3. 录入纸面练习答案");
+        io.println("4. 批改单套练习");
+        io.println("5. 批量批改多套练习");
+        io.println("6. 小明电脑练习并批改");
+        io.println("0. 退出");
+        io.println("============================================================");
     }
 }

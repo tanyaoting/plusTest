@@ -417,11 +417,14 @@ mvn test
 代码继续按职责分包。故事 6 新增的交互层放在：
 
 - `src/main/java/com/sylphy/ConsoleApplication.java`
+- `src/main/java/com/sylphy/console/ConsoleIo.java`
+- `src/main/java/com/sylphy/console/PracticeWorkflow.java`
+- `src/main/java/com/sylphy/console/PracticeFileLocator.java`
 
 编程规范：
 
 - `main` 保持薄入口。
-- 菜单交互集中在 `ConsoleApplication`。
+- `ConsoleApplication` 只负责菜单循环，菜单背后的业务流程放到 `PracticeWorkflow`。
 - 生成、读写、批改逻辑继续复用原有 service、reader、writer。
 - 不提交 `target/` 和 `output/`。
 
@@ -439,3 +442,234 @@ GitHub 仓库地址：
 ```
 
 本地 `v4` 标签也已推送到远端，用于查看故事 5 完成时的版本。
+
+# 故事 7：软件重构、打包和自动化测试
+
+## 1. 在面向对象的程序设计的基础上对软件程序进行重构
+
+故事 7 的主要问题是：功能越来越多以后，控制台入口类承担了菜单显示、输入校验、默认路径、文件命名和业务流程编排，类职责过重。重构后拆成几个更小的对象：
+
+- `ConsoleApplication`：只负责菜单循环和功能分发。
+- `ConsoleIo`：负责控制台输入输出、默认值读取和整数校验。
+- `PracticeWorkflow`：负责批量生成、选择打印、录入答案、批改和机器练习的流程编排。
+- `PracticeFileLocator`：负责默认路径和批量练习文件命名规则。
+- `ConfigLoader`：定义配置加载契约，方便测试替换配置来源。
+
+代码位置：
+
+- `src/main/java/com/sylphy/ConsoleApplication.java`
+- `src/main/java/com/sylphy/console/ConsoleIo.java`
+- `src/main/java/com/sylphy/console/PracticeWorkflow.java`
+- `src/main/java/com/sylphy/console/PracticeFileLocator.java`
+- `src/main/java/com/sylphy/console/ConfigLoader.java`
+
+## 2. 重构前的类图和重构后的 UML 类图，比较前后的优缺点
+
+重构前，`ConsoleApplication` 直接依赖配置、读写器、批改服务、CSV 工具、路径规则和控制台输入：
+
+```mermaid
+classDiagram
+    direction LR
+
+    class ArithmeticGenerator {
+        +main(String[] args) void
+    }
+
+    class ConsoleApplication {
+        +run() void
+        -generateBatchProblems() void
+        -selectAndPrintProblems() void
+        -editStudentAnswers() void
+        -gradeSelectedPractice() void
+        -gradeBatchPractice() void
+        -completePracticeOnComputer() void
+        -readPath(String, Path) Path
+        -readInteger(String) int
+    }
+
+    class GeneratorConfig
+    class ArithmeticProblemGenerator
+    class ProblemFileWriter
+    class ProblemCsvReader
+    class StudentAnswerCsvReader
+    class CsvFile
+    class GradingService
+    class GradingReportWriter
+
+    ArithmeticGenerator --> ConsoleApplication
+    ConsoleApplication --> GeneratorConfig
+    ConsoleApplication --> ArithmeticProblemGenerator
+    ConsoleApplication --> ProblemFileWriter
+    ConsoleApplication --> ProblemCsvReader
+    ConsoleApplication --> StudentAnswerCsvReader
+    ConsoleApplication --> CsvFile
+    ConsoleApplication --> GradingService
+    ConsoleApplication --> GradingReportWriter
+```
+
+重构后，菜单、交互、流程和路径规则分开：
+
+```mermaid
+classDiagram
+    direction LR
+
+    class ArithmeticGenerator {
+        +main(String[] args) void
+    }
+
+    class ConsoleApplication {
+        +run() void
+        -printMenu() void
+    }
+
+    class ConsoleIo {
+        +readLine(String) String
+        +readPath(String, Path) Path
+        +readOptionalPositiveInt(String, int) int
+        +readInteger(String) int
+        +println(String) void
+    }
+
+    class PracticeWorkflow {
+        +generateBatchProblems() void
+        +selectAndPrintProblems() void
+        +editStudentAnswers() void
+        +gradeSelectedPractice() void
+        +gradeBatchPractice() void
+        +completePracticeOnComputer() void
+    }
+
+    class PracticeFileLocator {
+        +defaultBatchDirectory(GeneratorConfig) Path
+        +batchProblemPath(Path, int) Path
+        +batchAnswerPath(Path, int) Path
+        +batchStudentAnswerPath(Path) Path
+        +batchResultPath(Path) Path
+    }
+
+    class ConfigLoader {
+        <<interface>>
+        +load() GeneratorConfig
+    }
+
+    class ArithmeticProblemGenerator
+    class ProblemFileWriter
+    class GradingService
+    class GradingReportWriter
+
+    ArithmeticGenerator --> ConsoleApplication
+    ConsoleApplication --> ConsoleIo
+    ConsoleApplication --> PracticeWorkflow
+    PracticeWorkflow --> ConsoleIo
+    PracticeWorkflow --> ConfigLoader
+    PracticeWorkflow --> PracticeFileLocator
+    PracticeWorkflow --> ArithmeticProblemGenerator
+    PracticeWorkflow --> ProblemFileWriter
+    PracticeWorkflow --> GradingService
+    PracticeWorkflow --> GradingReportWriter
+```
+
+前后比较：
+
+- 重构前优点：类少，初期容易直接阅读；缺点是 `ConsoleApplication` 过大，路径规则和输入规则混在流程里，后续修改容易互相影响。
+- 重构后优点：职责单一，路径规则可以独立测试，控制台输入可以复用，菜单类更稳定；缺点是类数量增加，需要理解对象之间的协作关系。
+
+## 3. 使用了哪些方法进行了重构
+
+本次使用的重构方法：
+
+- 提取类：从 `ConsoleApplication` 中提取 `ConsoleIo`、`PracticeWorkflow`、`PracticeFileLocator`。
+- 提取接口：提取 `ConfigLoader`，让配置加载成为可替换契约。
+- 移动方法：把路径命名方法移动到 `PracticeFileLocator`，把业务流程方法移动到 `PracticeWorkflow`。
+- 保持薄入口：`ArithmeticGenerator.main()` 只启动应用，避免入口承担业务逻辑。
+- 用测试保护重构：保留原有菜单流程测试，并新增路径规则测试。
+
+## 4. 将程序打包成一个可执行程序
+
+`pom.xml` 已配置 `maven-jar-plugin`，在 jar 清单中写入主类：
+
+```text
+Main-Class: com.sylphy.ArithmeticGenerator
+```
+
+打包命令：
+
+```bash
+mvn package
+```
+
+运行可执行 jar：
+
+```bash
+java -jar target/plusTest-1.0-SNAPSHOT.jar
+```
+
+如果换到新机器，需要先安装 JDK 21 或兼容的 Java 运行环境，再运行上面的 jar。
+
+代码位置：
+
+- `pom.xml`
+- `src/main/java/com/sylphy/ArithmeticGenerator.java`
+
+## 5. TDD 测试驱动开发
+
+本次重构保留了已有测试作为回归保护，并新增了路径命名规则测试，先明确期望行为，再让重构后的对象满足这些测试。
+
+新增测试：
+
+- `src/test/java/com/sylphy/console/PracticeFileLocatorTest.java`：验证默认目录、批量练习题目文件、标准答案文件、学生答案文件和批改结果文件的命名规则。
+
+已有关键测试：
+
+- `src/test/java/com/sylphy/ConsoleApplicationTest.java`：验证菜单默认流程、批量生成、单套批改、批量批改和机器练习。
+- `src/test/java/com/sylphy/service/GradingServiceTest.java`：验证批改业务规则。
+- `src/test/java/com/sylphy/csv/CsvFileTest.java`：验证 CSV 读写规则。
+
+测试命令：
+
+```bash
+mvn test
+```
+
+## 6. Git 代码管理和编程规范
+
+故事 7 使用独立分支开发：
+
+```bash
+git switch codex/v6
+```
+
+提交前检查：
+
+```bash
+git status
+mvn test
+```
+
+编程规范：
+
+- 一个类只承担一个主要职责。
+- 控制台文案使用中文，CSV 表头保持英文，便于程序处理。
+- 不提交 `target/`、`output/` 等生成目录。
+- 新增功能或重构关键规则时补充单元测试。
+
+## 7. 提交到 Gitee 上
+
+当前项目已配置 GitHub 远端：
+
+```text
+origin git@github.com:tanyaoting/plusTest.git
+```
+
+如果要提交到 Gitee，需要先增加 Gitee 远端地址，例如：
+
+```bash
+git remote add gitee <你的 Gitee 仓库 SSH 地址>
+git push gitee codex/v6
+```
+
+如果要把标签也推送到 Gitee：
+
+```bash
+git push gitee --tags
+```
