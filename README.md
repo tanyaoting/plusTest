@@ -124,7 +124,7 @@ java com.sylphy.ArithmeticGenerator grade <problems.csv> <student-answers.csv> <
 代码位置：
 
 - `src/main/java/com/sylphy/csv/CsvFile.java`：CSV 字符串转义和解析。
-- `src/main/java/com/sylphy/model/AbstractBinaryArithmeticProblem.java`：题目表达式格式化。
+- `src/main/java/com/sylphy/model/arithmericproblem/AbstractBinaryArithmeticProblem.java`：题目表达式格式化。
 - `src/test/java/com/sylphy/config/GeneratorConfigTest.java`：使用正则表达式读取 JSON 测试数据。
 
 ## 5. 数据建模和数据结构有哪些？
@@ -142,7 +142,7 @@ java com.sylphy.ArithmeticGenerator grade <problems.csv> <student-answers.csv> <
 
 代码位置：
 
-- `src/main/java/com/sylphy/model/ArithmeticProblem.java`
+- `src/main/java/com/sylphy/model/arithmericproblem/ArithmeticProblem.java`
 - `src/main/java/com/sylphy/model/ProblemBatch.java`
 - `src/main/java/com/sylphy/model/ProblemRecord.java`
 - `src/main/java/com/sylphy/model/StudentAnswerRecord.java`
@@ -216,3 +216,213 @@ java com.sylphy.ArithmeticGenerator grade <problems.csv> <student-answers.csv> <
 - `writer`：CSV 写入器。
 
 生成文件仍放在 `output/`，测试和构建产物不应提交。
+
+# 故事 6：用户交互的软件构造
+
+## 1. 设计用户界面原型
+
+控制台界面原型如下，运行主程序后循环显示，用户输入数字并按回车执行：
+
+```text
+100以内的口算练习程序
+============================================================
+功能列表（请输入功能前面对应的数字，按回车键执行）：
+------------------------------------------------------------
+1. 批量产生练习题
+2. 选择并打印练习题
+3. 编辑答题结果并保存
+4. 选择一次练习并批改
+5. 批量批改所有的题目
+6. 选择一套练习并在机器完成
+0. 退出
+============================================================
+请选择......
+```
+
+代码位置：
+
+- `src/main/java/com/sylphy/ArithmeticGenerator.java`：唯一 `main` 入口。
+- `src/main/java/com/sylphy/ConsoleApplication.java`：控制台界面、菜单循环和功能调度。
+
+## 2. 用户菜单导航（CLI 下的）
+
+菜单功能说明：
+
+- `1`：按配置或输入数量批量生成练习题和标准答案 CSV。
+- `2`：从题目 CSV 中选择一段题目，保存为可打印的练习 CSV。
+- `3`：家长按题目逐题录入答案，并保存学生答案 CSV。
+- `4`：选择一次练习题和学生答案进行批改。
+- `5`：批量批改默认题目文件和学生答案文件。
+- `6`：小明直接在电脑上答题，程序即时批改并保存结果。
+- `0`：退出程序。
+
+## 3. 程序只有一个 main 入口
+
+程序只有一个启动入口：
+
+```java
+com.sylphy.ArithmeticGenerator.main()
+```
+
+`main` 只负责启动 `ConsoleApplication`，具体功能由菜单类分发，避免多个程序入口造成使用顺序混乱。
+
+## 4. 交互设计的原则是什么？
+
+本程序采用以下交互原则：
+
+- 单入口：用户只运行一个主程序。
+- 数字菜单：每个功能对应一个数字，降低记忆成本。
+- 默认路径：常用文件路径提供默认值，减少重复输入。
+- 即时反馈：生成、录入、批改后立即提示文件位置和成绩。
+- 可退出循环：每次执行完功能后返回菜单，由用户决定何时退出。
+- 错误可见：输入错误、文件错误和批改错误显示中文提示，不静默失败。
+
+## 5. 静态程序分析
+
+从故障类型看，当前设计的防护如下：
+
+- 数据故障：`GeneratorConfig` 校验数量和范围，`ProblemRecord` 校验题号、运算符和减法约束。
+- 控制故障：`ConsoleApplication` 使用 `switch` 控制菜单状态，非法菜单项给出提示并返回菜单。
+- 输入/输出故障：CSV 读取校验空文件、重复表头、列数不一致；写文件前创建目录。
+- 接口故障：`ProblemCsvReader` 使用配置中的策略表匹配运算符，避免题目读取和策略实现不一致。
+- 存储管理故障：批量数据使用不可变 `ProblemBatch` 和 `GradingReport`，生成文件集中放入 `output/`。
+
+代码位置：
+
+- `src/main/java/com/sylphy/ConsoleApplication.java`
+- `src/main/java/com/sylphy/config/GeneratorConfig.java`
+- `src/main/java/com/sylphy/csv/CsvFile.java`
+- `src/main/java/com/sylphy/reader/ProblemCsvReader.java`
+- `src/main/java/com/sylphy/service/GradingService.java`
+
+## 6. 给出程序的类结构 UML 图
+
+```mermaid
+classDiagram
+    direction LR
+
+    class ArithmeticGenerator {
+        +main(String[] args) void
+    }
+
+    class ConsoleApplication {
+        +run() void
+    }
+
+    class GeneratorConfig {
+        +questionCount int
+        +minValue int
+        +maxValue int
+        +outputPath Path
+        +answerOutputPath Path
+        +strategies List~ArithmeticProblemStrategy~
+    }
+
+    class ArithmeticProblem {
+        <<interface>>
+        +format() String
+        +answer() int
+    }
+
+    class AdditionProblem
+    class SubtractionProblem
+    class ArithmeticProblemStrategy {
+        <<interface>>
+        +operator() char
+        +create(int, int) ArithmeticProblem
+    }
+
+    class ArithmeticProblemGenerator {
+        +generate(GeneratorConfig) ProblemBatch
+    }
+
+    class ProblemFileWriter {
+        +write(ProblemBatch, Path, Path) void
+    }
+
+    class ProblemCsvReader {
+        +read(Path) List~ProblemRecord~
+    }
+
+    class StudentAnswerCsvReader {
+        +read(Path) List~StudentAnswerRecord~
+    }
+
+    class GradingService {
+        +grade(List~ProblemRecord~, List~StudentAnswerRecord~) GradingReport
+    }
+
+    class GradingReportWriter {
+        +write(GradingReport, Path) void
+    }
+
+    ArithmeticGenerator --> ConsoleApplication
+    ConsoleApplication --> GeneratorConfig
+    ConsoleApplication --> ArithmeticProblemGenerator
+    ConsoleApplication --> ProblemFileWriter
+    ConsoleApplication --> ProblemCsvReader
+    ConsoleApplication --> StudentAnswerCsvReader
+    ConsoleApplication --> GradingService
+    ConsoleApplication --> GradingReportWriter
+    AdditionProblem ..|> ArithmeticProblem
+    SubtractionProblem ..|> ArithmeticProblem
+    ArithmeticProblemGenerator --> ArithmeticProblemStrategy
+    ArithmeticProblemStrategy --> ArithmeticProblem
+```
+
+## 7. 菜单结构中各个菜单间的状态转换 UML 图
+
+```mermaid
+stateDiagram-v2
+    [*] --> Menu
+    Menu --> GenerateBatch: 1
+    GenerateBatch --> Menu: 完成/失败
+    Menu --> SelectAndPrint: 2
+    SelectAndPrint --> Menu: 完成/失败
+    Menu --> EditAnswers: 3
+    EditAnswers --> Menu: 完成/失败
+    Menu --> GradeOne: 4
+    GradeOne --> Menu: 完成/失败
+    Menu --> GradeBatch: 5
+    GradeBatch --> Menu: 完成/失败
+    Menu --> ComputerPractice: 6
+    ComputerPractice --> Menu: 完成/失败
+    Menu --> Exit: 0
+    Exit --> [*]
+```
+
+## 8. 测试数据和单元测试
+
+故事 6 新增了菜单流程测试：
+
+- `src/test/java/com/sylphy/ConsoleApplicationTest.java`：覆盖批量生成、批量批改、机器练习。
+
+已有测试继续覆盖生成、CSV、批改和策略逻辑。当前验证命令：
+
+```bash
+mvn test
+```
+
+## 9. Git 代码管理和编程规范
+
+代码继续按职责分包。故事 6 新增的交互层放在：
+
+- `src/main/java/com/sylphy/ConsoleApplication.java`
+
+编程规范：
+
+- `main` 保持薄入口。
+- 菜单交互集中在 `ConsoleApplication`。
+- 生成、读写、批改逻辑继续复用原有 service、reader、writer。
+- 不提交 `target/` 和 `output/`。
+
+## 10. 提交到 GitHub 上
+
+本地已使用 Git 管理代码。提交到 GitHub 时执行：
+
+```bash
+git push
+git push origin v4
+```
+
+如果当前分支还没有远端跟踪分支，需要先设置远端分支。
