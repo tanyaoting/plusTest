@@ -9,6 +9,11 @@ import com.sylphy.model.arithmericproblem.ArithmeticProblem;
  */
 public final class AdditionProblemStrategy implements ArithmeticProblemStrategy {
     @Override
+    public String key() {
+        return "addition";
+    }
+
+    @Override
     public char operator() {
         return '+';
     }

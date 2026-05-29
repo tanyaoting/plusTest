@@ -9,6 +9,11 @@ import com.sylphy.model.arithmericproblem.SubtractionProblem;
  */
 public final class SubtractionProblemStrategy implements ArithmeticProblemStrategy {
     @Override
+    public String key() {
+        return "subtraction";
+    }
+
+    @Override
     public char operator() {
         return '-';
     }

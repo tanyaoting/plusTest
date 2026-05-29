@@ -7,7 +7,12 @@ import com.sylphy.model.arithmericproblem.ArithmeticProblem;
  * @author apple
  */
 public interface ArithmeticProblemStrategy {
-    
+    /**
+     * 获取配置中的策略标识
+     * @return
+     */
+    String key();
+
     /**
      * 获取操作符
      * @return

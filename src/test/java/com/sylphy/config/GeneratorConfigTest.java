@@ -54,6 +54,41 @@ class GeneratorConfigTest {
         assertEquals(100, config.maxValue());
         assertEquals(Path.of("output", "math-problems.csv"), config.outputPath());
         assertEquals(Path.of("output", "math-answers.csv"), config.answerOutputPath());
+        assertEquals(List.of('+', '-'), config.strategies().stream()
+                .map(strategy -> strategy.operator())
+                .toList());
+    }
+
+    @Test
+    void readsStrategiesFromProperties() {
+        Properties properties = new Properties();
+        properties.setProperty("problem.strategies", "addition,subtraction");
+
+        GeneratorConfig config = GeneratorConfig.fromProperties(properties);
+
+        assertEquals(List.of('+', '-'), config.strategies().stream()
+                .map(strategy -> strategy.operator())
+                .toList());
+    }
+
+    @Test
+    void readsSingleStrategyFromProperties() {
+        Properties properties = new Properties();
+        properties.setProperty("problem.strategies", "addition");
+
+        GeneratorConfig config = GeneratorConfig.fromProperties(properties);
+
+        assertEquals(List.of('+'), config.strategies().stream()
+                .map(strategy -> strategy.operator())
+                .toList());
+    }
+
+    @Test
+    void rejectsUnsupportedStrategyName() {
+        Properties properties = new Properties();
+        properties.setProperty("problem.strategies", "multiplication");
+
+        assertThrows(IllegalArgumentException.class, () -> GeneratorConfig.fromProperties(properties));
     }
 
     @Test

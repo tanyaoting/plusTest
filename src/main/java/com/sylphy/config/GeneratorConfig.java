@@ -1,8 +1,7 @@
 package com.sylphy.config;
 
-import com.sylphy.strategy.AdditionProblemStrategy;
 import com.sylphy.strategy.ArithmeticProblemStrategy;
-import com.sylphy.strategy.SubtractionProblemStrategy;
+import com.sylphy.strategy.StrategyRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +24,7 @@ public record GeneratorConfig(int questionCount, int minValue, int maxValue, Pat
     private static final int DEFAULT_MAX_VALUE = 100;
     private static final Path DEFAULT_OUTPUT_PATH = Path.of("output", "math-problems.csv");
     private static final Path DEFAULT_ANSWER_OUTPUT_PATH = Path.of("output", "math-answers.csv");
+    private static final String STRATEGY_NAMES_KEY = "problem.strategies";
 
     public GeneratorConfig(int questionCount, int minValue, int maxValue, Path outputPath, Path answerOutputPath) {
         this(questionCount, minValue, maxValue, outputPath, answerOutputPath, defaultStrategies());
@@ -70,7 +70,8 @@ public record GeneratorConfig(int questionCount, int minValue, int maxValue, Pat
                 readInt(properties, "value.min", DEFAULT_MIN_VALUE),
                 readInt(properties, "value.max", DEFAULT_MAX_VALUE),
                 Path.of(properties.getProperty("output.path", DEFAULT_OUTPUT_PATH.toString())),
-                Path.of(properties.getProperty("answer.output.path", DEFAULT_ANSWER_OUTPUT_PATH.toString()))
+                Path.of(properties.getProperty("answer.output.path", DEFAULT_ANSWER_OUTPUT_PATH.toString())),
+                readStrategies(properties)
         );
     }
 
@@ -83,7 +84,28 @@ public record GeneratorConfig(int questionCount, int minValue, int maxValue, Pat
     }
 
     public static List<ArithmeticProblemStrategy> defaultStrategies() {
-        return List.of(new AdditionProblemStrategy(), new SubtractionProblemStrategy());
+        return StrategyRegistry.availableStrategies();
+    }
+
+    private static List<ArithmeticProblemStrategy> readStrategies(Properties properties) {
+        String value = properties.getProperty(STRATEGY_NAMES_KEY);
+        if (value == null || value.isBlank()) {
+            return defaultStrategies();
+        }
+        return List.of(value.split(",")).stream()
+                .map(String::trim)
+                .filter(strategyKey -> !strategyKey.isBlank())
+                .map(GeneratorConfig::findStrategy)
+                .toList();
+    }
+
+    private static ArithmeticProblemStrategy findStrategy(String strategyKey) {
+        for (ArithmeticProblemStrategy strategy : StrategyRegistry.availableStrategies()) {
+            if (strategy.key().equalsIgnoreCase(strategyKey)) {
+                return strategy;
+            }
+        }
+        throw new IllegalArgumentException("unsupported problem strategy: " + strategyKey);
     }
 
     private static void validateStrategies(List<ArithmeticProblemStrategy> strategies) {

@@ -18,6 +18,7 @@ class ArithmeticProblemStrategyTest {
 
         ArithmeticProblem problem = strategy.create(3, 5);
 
+        assertEquals("addition", strategy.key());
         assertEquals('+', strategy.operator());
         assertInstanceOf(AdditionProblem.class, problem);
         assertEquals(8, problem.answer());
@@ -29,6 +30,7 @@ class ArithmeticProblemStrategyTest {
 
         ArithmeticProblem problem = strategy.create(2, 5);
 
+        assertEquals("subtraction", strategy.key());
         assertEquals('-', strategy.operator());
         assertInstanceOf(SubtractionProblem.class, problem);
         assertEquals(5, problem.left());
