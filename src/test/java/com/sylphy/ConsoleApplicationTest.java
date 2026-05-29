@@ -28,20 +28,42 @@ class ConsoleApplicationTest {
 
     @Test
     void menuCanGenerateBatchProblems() {
-        Path problemPath = tempDir.resolve("problems.csv");
-        Path answerPath = tempDir.resolve("answers.csv");
-        String input = String.join(System.lineSeparator(), "1", "2", "0") + System.lineSeparator();
+        Path batchDirectory = tempDir.resolve("practices");
+        String input = String.join(System.lineSeparator(), "1", "2", "1", batchDirectory.toString(), "0")
+                + System.lineSeparator();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        createApplication(input, output, problemPath, answerPath).run();
+        createApplication(input, output, tempDir.resolve("problems.csv"), tempDir.resolve("answers.csv")).run();
 
-        assertTrue(Files.exists(problemPath));
-        assertTrue(Files.exists(answerPath));
-        assertTrue(output.toString(StandardCharsets.UTF_8).contains("已生成 2 道题。"));
+        assertTrue(Files.exists(batchDirectory.resolve("practice-001-problems.csv")));
+        assertTrue(Files.exists(batchDirectory.resolve("practice-001-answers.csv")));
+        assertTrue(Files.exists(batchDirectory.resolve("practice-002-problems.csv")));
+        assertTrue(Files.exists(batchDirectory.resolve("practice-002-answers.csv")));
+        assertTrue(output.toString(StandardCharsets.UTF_8).contains("共生成 2 套练习，每套 1 道题。"));
     }
 
     @Test
-    void menuCanGradeBatchPractice() throws Exception {
+    void defaultInputsCanRunPaperPracticeFlow() {
+        String input = String.join(System.lineSeparator(),
+                "1", "", "", "",
+                "2", "", "", "", "", "",
+                "3", "", "0", "",
+                "4", "", "", "",
+                "0"
+        ) + System.lineSeparator();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        createApplication(input, output, tempDir.resolve("problems.csv"), tempDir.resolve("answers.csv")).run();
+
+        assertTrue(Files.exists(tempDir.resolve("practices/practice-001-problems.csv")));
+        assertTrue(Files.exists(tempDir.resolve("selected-problems.csv")));
+        assertTrue(Files.exists(tempDir.resolve("student-answers.csv")));
+        assertTrue(Files.exists(tempDir.resolve("results.csv")));
+        assertTrue(output.toString(StandardCharsets.UTF_8).contains("批改结果已保存到："));
+    }
+
+    @Test
+    void menuCanGradeSelectedPractice() throws Exception {
         Path problemPath = tempDir.resolve("problems.csv");
         Path answerPath = tempDir.resolve("student-answers.csv");
         Path resultPath = tempDir.resolve("results.csv");
@@ -49,7 +71,7 @@ class ConsoleApplicationTest {
                 + "1,3,+,5,3 + 5 = " + System.lineSeparator());
         Files.writeString(answerPath, "index,studentAnswer" + System.lineSeparator()
                 + "1,8" + System.lineSeparator());
-        String input = String.join(System.lineSeparator(), "5", problemPath.toString(), answerPath.toString(),
+        String input = String.join(System.lineSeparator(), "4", problemPath.toString(), answerPath.toString(),
                 resultPath.toString(), "0") + System.lineSeparator();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -57,6 +79,33 @@ class ConsoleApplicationTest {
 
         assertTrue(Files.exists(resultPath));
         assertTrue(output.toString(StandardCharsets.UTF_8).contains("得分：100"));
+    }
+
+    @Test
+    void menuCanGradeAllBatchPractices() throws Exception {
+        Path batchDirectory = tempDir.resolve("practices");
+        Files.createDirectories(batchDirectory);
+        Files.writeString(batchDirectory.resolve("practice-001-problems.csv"),
+                "index,left,operator,right,expression" + System.lineSeparator()
+                        + "1,3,+,5,3 + 5 = " + System.lineSeparator());
+        Files.writeString(batchDirectory.resolve("practice-001-student-answers.csv"),
+                "index,studentAnswer" + System.lineSeparator()
+                        + "1,8" + System.lineSeparator());
+        Files.writeString(batchDirectory.resolve("practice-002-problems.csv"),
+                "index,left,operator,right,expression" + System.lineSeparator()
+                        + "1,9,-,4,9 - 4 = " + System.lineSeparator());
+        Files.writeString(batchDirectory.resolve("practice-002-student-answers.csv"),
+                "index,studentAnswer" + System.lineSeparator()
+                        + "1,5" + System.lineSeparator());
+        String input = String.join(System.lineSeparator(), "5", batchDirectory.toString(), "0")
+                + System.lineSeparator();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        createApplication(input, output, tempDir.resolve("problems.csv"), tempDir.resolve("answers.csv")).run();
+
+        assertTrue(Files.exists(batchDirectory.resolve("practice-001-results.csv")));
+        assertTrue(Files.exists(batchDirectory.resolve("practice-002-results.csv")));
+        assertTrue(output.toString(StandardCharsets.UTF_8).contains("批量批改完成，共批改 2 套练习。"));
     }
 
     @Test
@@ -84,7 +133,7 @@ class ConsoleApplicationTest {
                 new ProblemFileWriter(),
                 new GradingReportWriter(),
                 new GradingService(),
-                () -> new GeneratorConfig(5, 0, 100, problemPath, answerPath)
+                () -> new GeneratorConfig(1, 0, 100, problemPath, answerPath)
         );
     }
 }
