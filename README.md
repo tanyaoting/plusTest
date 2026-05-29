@@ -244,6 +244,13 @@ java com.sylphy.ArithmeticGenerator grade <problems.csv> <student-answers.csv> <
 - `src/main/java/com/sylphy/ArithmeticGenerator.java`：唯一 `main` 入口。
 - `src/main/java/com/sylphy/ConsoleApplication.java`：控制台界面、菜单循环和功能调度。
 
+运行方式：
+
+```bash
+mvn -q -DskipTests compile
+java -cp target/classes com.sylphy.ArithmeticGenerator
+```
+
 ## 2. 用户菜单导航（CLI 下的）
 
 菜单功能说明：
@@ -418,11 +425,15 @@ mvn test
 
 ## 10. 提交到 GitHub 上
 
-本地已使用 Git 管理代码。提交到 GitHub 时执行：
+GitHub 仓库地址：
 
-```bash
-git push
-git push origin v4
+- `git@github.com:tanyaoting/plusTest.git`
+- `https://github.com/tanyaoting/plusTest`
+
+故事 6 已提交并推送到 `main` 分支。最近一次故事 6 提交：
+
+```text
+96fa018 feat: add story 6 console menu
 ```
 
-如果当前分支还没有远端跟踪分支，需要先设置远端分支。
+本地 `v4` 标签也已推送到远端，用于查看故事 5 完成时的版本。
